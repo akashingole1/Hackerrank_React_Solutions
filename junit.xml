@@ -1,12 +1,10 @@
-<testsuites name="jest tests" tests="4" failures="0" time="0.893">
-  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2020-06-13T15:04:27" time="0.893" tests="4">
-    <testcase classname=" initial UI is rendered as expected" name=" initial UI is rendered as expected" time="0.028">
+<testsuites name="jest tests" tests="3" failures="0" time="1.021">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2020-06-12T10:45:35" time="1.021" tests="3">
+    <testcase classname=" Initial UI renders correctly" name=" Initial UI renders correctly" time="0.108">
     </testcase>
-    <testcase classname=" search is made on by clicking on search button and no results found" name=" search is made on by clicking on search button and no results found" time="0.022">
+    <testcase classname=" Test with non existing author" name=" Test with non existing author" time="0.054">
     </testcase>
-    <testcase classname=" search is made on by clicking on search button and result found - test 1" name=" search is made on by clicking on search button and result found - test 1" time="0.013">
-    </testcase>
-    <testcase classname=" search is made on by clicking on search button and result found - test 2" name=" search is made on by clicking on search button and result found - test 2" time="0.018">
+    <testcase classname=" Test with existing author" name=" Test with existing author" time="0.013">
     </testcase>
   </testsuite>
 </testsuites>
