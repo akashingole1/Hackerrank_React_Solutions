@@ -1,41 +1,21 @@
 import React, { Component } from 'react';
 import './App.css';
+import logo from './logo.svg';
+import FootballMatchesData from './components/football-data/index.js';
 
-import Articles from './components/Articles';
+const title = "Football Comptetions";
 
 class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      articles: []
-    }
-  }
-
-  componentDidMount() {
-    this.props.changeOrderByUpvotes();
-    this.setState({ articles: this.props.articles })
-  }
-
-  onTopClicked = () => {
-    this.props.changeOrderByDate();
-    this.setState({ articles: this.props.articles })
-  }
-
-  onNewestClicked = () => {
-    this.props.changeOrderByUpvotes();
-    this.setState({ articles: this.props.articles })
-  }
-
   render() {
-    const { articles } = this.state;
-
     return (
-      <div className="App">
-        <div className="navigation">
-          <button data-testid="top-link" onClick={this.onTopClicked}>Top</button>
-          <button data-testid="newest-link" onClick={this.onNewestClicked}>Newest</button>
-        </div>
-        <Articles articles={articles} />
+      <div>
+        <nav className="app-header layout-row align-items-center justify-content-center">
+          <div className="layout-row align-items-center">
+            <img alt="" src={logo} className="logo" />
+            <h4 id="app-title" data-testid="app-title" className="app-title">{title}</h4>
+          </div>
+        </nav>
+        <FootballMatchesData />
       </div>
     );
   }

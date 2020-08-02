@@ -1,147 +1,74 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import App from './App';
-import { render, within, fireEvent, cleanup } from '@testing-library/react';
-
+import { render, fireEvent, cleanup, wait } from '@testing-library/react';
+import fetchMock from 'fetch-mock'
 import 'jest-dom/extend-expect';
 
-const testIds = {
-  topLink: "top-link",
-  newestLink: "newest-link",
-  article: "article",
-};
-
-const articles = [
-  {
-    title: "Alphabet earnings",
-    upvotes: 22,
-    date: "2011-11-23",
-  },
-  {
-    title: "Artificial Mountains",
-    upvotes: 200,
-    date: "2019-11-23",
-  },
-  {
-    title: "Scaling to 100k Users",
-    upvotes: 72,
-    date: "2019-10-21",
-  },
-  {
-    title: "A message to our customers",
-    upvotes: 12,
-    date: "2019-10-22",
-  },
-  {
-    title: "the Emu War",
-    upvotes: 24,
-    date: "2018-04-01",
-  },
-  {
-    title: "What's SAP",
-    upvotes: 1,
-    date: "2017-01-21",
-  },
-  {
-    title: "Simple text editor has 15k monthly users",
-    upvotes: 83,
-    date: "2020-02-22",
-  },
-];
-
-const topArticles = articles.concat().sort((a, b) => {
-  if (a.upvotes > b.upvotes) {
-    return -1;
-  }
-  if (a.upvotes < b.upvotes) {
-    return 1;
-  }
-  return 0;
-});
-
-const newestArticles = articles.concat().sort((a, b) => {
-  const aDate = new Date(a.date);
-  const bDate = new Date(b.date);
-  if (aDate > bDate) {
-    return -1;
-  }
-  if (aDate < bDate) {
-    return 1;
-  }
-  return 0;
-});
-
-const renderApp = () => render(<App articles={articles} />);
-
-beforeEach(() => {
-});
+const renderApp = () => render(<App/>);
 
 afterEach(() => {
-  cleanup();
+  fetchMock.restore();
+  cleanup()
 });
 
-test('Navigation renders correctly', () => {
-  const { getByTestId, queryAllByTestId } = renderApp();
-
-  const topLink = getByTestId(testIds.topLink);
-  expect(topLink).toBeVisible();
-  expect(topLink).toHaveTextContent("Top");
-
-  const newestLink = getByTestId(testIds.newestLink);
-  expect(newestLink).toBeVisible();
-  expect(newestLink).toHaveTextContent("Newest");
+test('initial UI is rendered as expected', () => {
+	let { getByTestId, queryByTestId } = renderApp();
+  expect(getByTestId('app-title')).toHaveTextContent('Football Comptetions');
+  expect(getByTestId('year-list').childNodes).toHaveLength(7);
+	expect(queryByTestId('total-matches')).toBe(null);
+  expect(queryByTestId('match-list')).toBe(null);
+  expect(queryByTestId('no-result')).toBe(null);
 });
 
-const expectArticles = (articles, expectedArticles) => {
-  expect(articles).toHaveLength(expectedArticles.length);
-  articles.forEach((article, i) => {
-    const title = within(article).getByTestId("article-title").textContent;
-    const upvotes = within(article).getByTestId("article-upvotes").textContent;
-    const date = within(article).getByTestId("article-date").textContent;
-    const expectedArticle = expectedArticles[i];
-    expect([title, upvotes, date]).toEqual([expectedArticle.title, expectedArticle.upvotes.toString(), expectedArticle.date]);
+test('search is made on by clicking on search button and no results found', async() => {
+	let { getByTestId, queryByTestId } = renderApp();
+
+  const url = 'https://jsonmock.hackerrank.com/api/football_competitions?year=2017';
+  fetchMock.getOnce(url, JSON.stringify({ page:1,per_page:10,total:0,total_pages:0,data:[]}));
+  
+  fireEvent.click(getByTestId('year-list').childNodes[6]);
+
+  await wait(() => {
+    expect(queryByTestId('total-matches')).toBe(null);
+    expect(queryByTestId('match-list')).toBe(null);
+    expect(queryByTestId('no-result')).not.toBe(null);
+    expect(getByTestId('no-result')).toHaveTextContent('No Matches Found');
   });
-};
-
-test('Initial articles render correctly', () => {
-  const { getByTestId, queryAllByTestId } = renderApp();
-
-  const articles = queryAllByTestId(testIds.article);
-  expectArticles(articles, topArticles);
 });
 
-test('Clicking on top renders expected articles', () => {
-  const { getByTestId, queryAllByTestId } = renderApp();
+test('search is made on by clicking on search button and result found - test 1', async() => {
+	let { getByTestId, queryByTestId } = renderApp();
 
-  const topLink = getByTestId(testIds.topLink);
-  fireEvent.click(topLink);
+  const url = 'https://jsonmock.hackerrank.com/api/football_competitions?year=2011';
+  fetchMock.getOnce(url, JSON.stringify({ page:1,per_page:10,total:0,total_pages:0,data:[{"name":"UEFA Champions League","country":"","year":2011,"winner":"Chelsea","runnerup":"Bayern Munich"},{"name":"Serie A","country":"Italy","year":2011,"winner":"Juventus","runnerup":"AC Milan"},{"name":"Bundesliga","country":"Germany","year":2011,"winner":"Borussia Dortmund","runnerup":"Bayern Munchen"}]}));
+  
+  fireEvent.click(getByTestId('year-list').childNodes[0]);
 
-  const articles = queryAllByTestId(testIds.article);
-  expectArticles(articles, topArticles);
+  await wait(() => {
+    expect(queryByTestId('total-matches')).toHaveTextContent('Total matches: 3');
+    const results = queryByTestId('match-list');
+    expect(results.childNodes).toHaveLength(3);
+    expect(results.childNodes[0]).toHaveTextContent('Match UEFA Champions League won by Chelsea');
+    expect(results.childNodes[1]).toHaveTextContent('Match Serie A won by Juventus');
+    expect(results.childNodes[2]).toHaveTextContent('Match Bundesliga won by Borussia Dortmund');
+    expect(queryByTestId('no-result')).toBe(null);
+  });
 });
 
-test('Clicking on newest renders expected articles', () => {
-  const { getByTestId, queryAllByTestId } = renderApp();
+test('search is made on by clicking on search button and result found - test 2', async() => {
+	let { getByTestId, queryByTestId } = renderApp();
 
-  const newestLink = getByTestId(testIds.newestLink);
-  fireEvent.click(newestLink);
+  const url = 'https://jsonmock.hackerrank.com/api/football_competitions?year=2013';
+  fetchMock.getOnce(url, JSON.stringify({ page:1,per_page:10,total:0,total_pages:0,data:[{"name":"English Premier League","country":"England","year":2013,"winner":"Manchester City","runnerup":"Liverpool"},{"name":"La Liga","country":"Spain","year":2013,"winner":"Atletico Madrid","runnerup":"FC Barcelona"}]}));
+  
+  fireEvent.click(getByTestId('year-list').childNodes[2]);
 
-  const articles = queryAllByTestId(testIds.article);
-  expectArticles(articles, newestArticles);
-});
-
-
-test('Sequence of navigation clicks renders expected artices', () => {
-  const { getByTestId, queryAllByTestId } = renderApp();
-
-  const topLink = getByTestId(testIds.topLink);
-  const newestLink = getByTestId(testIds.newestLink);
-
-  const elements = [newestLink, topLink, topLink, newestLink, newestLink, topLink];
-  for (const elem of elements) {
-    fireEvent.click(elem);
-    const articles = queryAllByTestId(testIds.article);
-    const expectedArticles = elem === topLink ? topArticles : newestArticles;
-    expectArticles(articles, expectedArticles);
-  }
+  await wait(() => {
+    expect(queryByTestId('total-matches')).toHaveTextContent('Total matches: 2');
+    const results = queryByTestId('match-list');
+    expect(results.childNodes).toHaveLength(2);
+    expect(results.childNodes[0]).toHaveTextContent('Match English Premier League won by Manchester City');
+    expect(results.childNodes[1]).toHaveTextContent('Match La Liga won by Atletico Madrid');
+    expect(queryByTestId('no-result')).toBe(null);
+  });
 });
